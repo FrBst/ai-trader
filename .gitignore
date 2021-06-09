@@ -1,0 +1,3 @@
+# Project exclude paths
+/src/main/resources/dataset/
+/target/

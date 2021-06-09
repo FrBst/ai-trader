@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.SymbolBrowser">
+   <children>
+      <LineChart fx:id="chart" animated="false" createSymbols="false">
+        <xAxis>
+          <CategoryAxis label="Date" side="BOTTOM" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis label="Price" side="LEFT" />
+        </yAxis>
+      </LineChart>
+      <VBox>
+         <children>
+            <TextField fx:id="searchBar" />
+            <ListView fx:id="symbolListView" editable="true" onMouseClicked="#onSymbolSelected" />
+         </children>
+      </VBox>
+   </children>
+</HBox>

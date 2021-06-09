@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane alignment="center" hgap="10" prefHeight="400.0" prefWidth="600.0" vgap="10" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.TraderApplication">
+    <padding><Insets bottom="10" left="25" right="25" top="25" /></padding>
+   <columnConstraints>
+      <ColumnConstraints />
+   </columnConstraints>
+   <rowConstraints>
+      <RowConstraints />
+      <RowConstraints />
+      <RowConstraints />
+   </rowConstraints>
+   <children>
+      <Button fx:id="getDataButton" mnemonicParsing="false" onAction="#getDataButtonClicked" text="Get data" />
+      <Button mnemonicParsing="false" onAction="#browseSymbolsButtonClicked" text="Browse symbols" GridPane.rowIndex="1" />
+      <Button mnemonicParsing="false" onAction="#statisticsButtonClicked" text="Statistics" GridPane.rowIndex="2" />
+   </children>
+</GridPane>
