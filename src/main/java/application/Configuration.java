@@ -9,6 +9,7 @@ import java.util.Properties;
 
 // Thanks to matsev https://stackoverflow.com/questions/26908854.
 public class Configuration {
+
     private static final String CONFIGURATION_FILE = "/configuration.properties";
     private static final Properties properties;
 
@@ -31,9 +32,15 @@ public class Configuration {
     }
 
 
-    public static String getConfigurationValue(String key) {
+    public static String getConfig(String key) {
         return properties.getProperty(key);
     }
+
+    public static String dailyAdjustedFolder() { return properties.getProperty("data-folder") + "daily-adjusted/"; }
+
+    public static String testDataFolder() { return properties.getProperty("data-folder") + "test/"; }
+
+    public static String trainDataFolder() { return properties.getProperty("data-folder") + "train/"; }
 
     // private constructor to prevent initialization
     private Configuration() {

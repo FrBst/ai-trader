@@ -9,14 +9,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.nio.file.FileSystemException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.logging.Logger;
+import java.nio.file.*;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class LoadDataWindow {
@@ -41,9 +35,9 @@ public class LoadDataWindow {
 
         List<String> records = new LinkedList<>();
         // Fill the list.
-        // todo: check existing files structure.
         // todo: propper logging.
         // todo: better UI! + loading bars.
+        // todo: separate into two try-blocks.
         try (BufferedReader br1 = new BufferedReader(new FileReader(active));
                 BufferedReader br2 = new BufferedReader(new FileReader(delisted))) {
             String line;
@@ -79,13 +73,13 @@ public class LoadDataWindow {
     public void downloadSymbolList() throws IOException {
 
         FileUtils.copyURLToFile(
-                new URL("https://www.alphavantage.co/query?function=LISTING_STATUS&apikey=" + Configuration.getConfigurationValue("key")),
+                new URL("https://www.alphavantage.co/query?function=LISTING_STATUS&apikey=" + Configuration.getConfig("key")),
                 new File(activeSymbolsFile),
                 3000,
                 3000);
         System.out.println("Downloaded active symbols");
         FileUtils.copyURLToFile(
-                new URL("https://www.alphavantage.co/query?function=LISTING_STATUS&state=delisted&apikey=" + Configuration.getConfigurationValue("key")),
+                new URL("https://www.alphavantage.co/query?function=LISTING_STATUS&state=delisted&apikey=" + Configuration.getConfig("key")),
                 new File(delistedSymbolsFile),
                 3000,
                 3000);
@@ -98,7 +92,7 @@ public class LoadDataWindow {
             try {
                 FileUtils.copyURLToFile(
                         new URL("https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=" + symbol +
-                                "&outputsize=full&datatype=csv&apikey=" + Configuration.getConfigurationValue("key")),
+                                "&outputsize=full&datatype=csv&apikey=" + Configuration.getConfig("key")),
                         new File(dailyAdjustedDataFolder + symbol + ".csv"),
                         3000,
                         3000);
@@ -139,6 +133,22 @@ public class LoadDataWindow {
         } catch (IOException e) {
             // todo: should probably do it some other way.
             throw new RuntimeException();
+        }
+    }
+
+    // todo: autocreate directories.
+    public void divideData() throws IOException {
+        ArrayList<File> symbols = Arrays.stream(new File(dailyAdjustedDataFolder).listFiles()).collect(Collectors.toCollection(ArrayList<File>::new));
+        Collections.shuffle(symbols);
+        Path copied;
+        for (int i = 0; i < symbols.size(); i++) {
+            if (i >= 500) {
+                copied = Paths.get("src/main/resources/dataset/train/" + symbols.get(i).getName());
+            } else {
+                copied = Paths.get("src/main/resources/dataset/test/" + symbols.get(i).getName());
+            }
+            Path originalPath = symbols.get(i).toPath();
+            Files.copy(originalPath, copied, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 }

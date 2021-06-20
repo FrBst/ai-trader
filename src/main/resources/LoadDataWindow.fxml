@@ -25,5 +25,10 @@
             <Button mnemonicParsing="false" onAction="#checkFiles" text="Check files" />
          </children>
       </HBox>
+      <HBox alignment="CENTER">
+         <children>
+            <Button mnemonicParsing="false" onAction="#divideData" text="Divide data" />
+         </children>
+      </HBox>
    </children>
 </VBox>

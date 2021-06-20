@@ -11,7 +11,6 @@ import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import org.apache.commons.io.IOUtils;
-import org.json.JSONObject;
 
 import java.awt.event.MouseEvent;
 import java.io.*;
