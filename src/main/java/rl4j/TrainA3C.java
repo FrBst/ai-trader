@@ -25,27 +25,32 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 import java.io.IOException;
 import java.util.Random;
 
-public class TrainA3C {
-    public static void main(String[] args) throws IOException, InterruptedException {
-        int maxTries = 500;
+public class TrainA3C implements Runnable {
+    public static void main(String[] args) {
+        int maxTries = 100;
 
         A3CDiscrete.A3CConfiguration A3C =
                 A3CDiscrete.A3CConfiguration.builder()
                         .seed(5)
                         .maxEpochStep(365 * 11)
-                        .maxStep(365 * 11 * maxTries)
-                        .numThread(8)
+                        .maxStep(100000)
+                        .numThread(1)
                         .nstep(10)
                         .updateStart(0)
                         .rewardFactor(0.1)
-                        .gamma(0.9999)
+                        .gamma(0.99)
                         .errorClamp(1.0)
                         .build();
 
-        ActorCriticFactorySeparateStdDense.Configuration configuration = ActorCriticFactorySeparateStdDense.Configuration
-                .builder().updater(new Adam(0.0003)).useLSTM(true).l2(0).numHiddenNodes(5).numLayer(5).build();
+        ActorCriticFactorySeparateStdDense.Configuration configuration = ActorCriticFactorySeparateStdDense.Configuration.builder()
+                .updater(new Adam(0.003))
+                .useLSTM(true)
+                .l2(0)
+                .numHiddenNodes(16)
+                .numLayer(50)
+                .build();
 
-        MDP<SimpleBroker, Integer, DiscreteSpace> mdp = new BrokerMdp(5000, new Random(3));
+        MDP<SimpleBroker, Integer, DiscreteSpace> mdp = new BrokerMdp(1000, new Random(121));
 
         A3CDiscreteDense<SimpleBroker> a3c = new A3CDiscreteDense<>(mdp, configuration, A3C);
 
@@ -54,8 +59,15 @@ public class TrainA3C {
 
         //useless on toy but good practice!
         mdp.close();
+        try {
+            a3c.getPolicy().save("snake-player-a3c-value-10.bin", "snake-player-a3c-policy-10.bin");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        a3c.getPolicy().save("snake-player-a3c-value-10.bin", "snake-player-a3c-policy-10.bin");
+    public void run() {
+        main(new String[] { } );
     }
 
 //    public static MultiLayerNetwork getNet() {

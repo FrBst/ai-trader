@@ -20,9 +20,6 @@
 
 package rl4j;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Value;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -50,7 +47,6 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
 
 import java.util.Arrays;
 
-@Value
 public class FactoryTest implements ActorCriticFactorySeparate {
 
     ActorCriticDenseNetworkConfiguration conf;
@@ -135,8 +131,6 @@ public class FactoryTest implements ActorCriticFactorySeparate {
         return new ActorCriticSeparate(model, model2);
     }
 
-    @Value
-    @Builder
     @Deprecated
     public static class Configuration {
 

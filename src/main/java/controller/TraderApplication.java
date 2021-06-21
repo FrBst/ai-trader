@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import rl4j.TrainA3C;
 
 import java.io.IOException;
 
@@ -31,5 +32,10 @@ public class TraderApplication {
         stage.setTitle("Statistics");
         stage.setScene(new Scene(root));
         stage.show();
+    }
+
+    public void trainButtonClicked() {
+        Thread fuck = new Thread(new TrainA3C());
+        fuck.start();
     }
 }

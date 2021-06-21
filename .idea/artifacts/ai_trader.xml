@@ -1,0 +1,21 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="ai-trader">
+    <output-path>$PROJECT_DIR$/out/artifacts/ai_trader</output-path>
+    <properties id="javafx-properties">
+      <options>
+        <option name="appClass" value="application.Main" />
+        <option name="description" value="" />
+        <option name="htmlPlaceholderId" value="" />
+        <option name="nativeBundle" value="exe" />
+        <option name="title" value="" />
+        <option name="vendor" value="" />
+        <option name="version" value="" />
+      </options>
+    </properties>
+    <root id="root">
+      <element id="archive" name="ai_trader.jar">
+        <element id="module-output" name="ai-trader" />
+      </element>
+    </root>
+  </artifact>
+</component>

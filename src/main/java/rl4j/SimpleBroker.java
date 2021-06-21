@@ -1,12 +1,12 @@
 package rl4j;
 
-import model.DataFeeder;
+import model.DataFeed;
+import model.StockTimepoint;
 import org.apache.commons.lang3.NotImplementedException;
 import org.deeplearning4j.rl4j.space.Encodable;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
-import java.util.Arrays;
 import java.util.Random;
 
 
@@ -16,31 +16,32 @@ public class SimpleBroker implements Encodable {
     private double commissionPercent = 0.3;
     private double cash;
     private int stocksCount;
-    private double avgPrice;
+    private double avgBuyPrice;
+    private double currentPrice;
+    private boolean seriesEnd;
 
-    DataFeeder feeder;
+    private final DataFeed feed;
 
-    boolean seriesEnd;
 
     public SimpleBroker(double startingCash, Random r) {
         cash = startingCash;
-        stocksCount = 0;
-        avgPrice = 0.0;
-
-        feeder = new DataFeeder(r);
+        feed = new DataFeed(r);
+        step();
     }
 
-    private SimpleBroker(double commissionPercent, double cash, int stocksCount, double avgPrice, DataFeeder feeder) {
+    public SimpleBroker(double commissionPercent, double cash, int stocksCount, double avgBuyPrice, double currentPrice, boolean seriesEnd, DataFeed feed) {
         this.commissionPercent = commissionPercent;
         this.cash = cash;
         this.stocksCount = stocksCount;
-        this.avgPrice = avgPrice;
-        this.feeder = feeder;
+        this.avgBuyPrice = avgBuyPrice;
+        this.currentPrice = currentPrice;
+        this.seriesEnd = seriesEnd;
+        this.feed = feed;
     }
 
     @Override
     public Encodable dup() {
-        return new SimpleBroker(commissionPercent, cash, stocksCount, avgPrice, new DataFeeder(feeder));
+        return new SimpleBroker(commissionPercent, cash, stocksCount, avgBuyPrice, currentPrice, seriesEnd, new DataFeed(feed));
     }
 
     @Override
@@ -51,7 +52,7 @@ public class SimpleBroker implements Encodable {
     @Override
     @Deprecated
     public double[] toArray() {
-        return new double[] {0, 0, 0, 0, 0};
+        throw new NotImplementedException("Method SimpleBroker.toArray()");
     }
 
     @Override
@@ -60,72 +61,101 @@ public class SimpleBroker implements Encodable {
                 "commissionPercent=" + commissionPercent +
                 "cash=" + cash +
                 ", stocksCount=" + stocksCount +
-                ", avgPrice=" + avgPrice +
-                ", feeder=" + feeder +
+                ", avgBuyPrice=" + avgBuyPrice +
+                ", currentPrice=" + currentPrice +
                 ", seriesEnd=" + seriesEnd +
+                ", feed=" + feed +
                 '}';
     }
 
-    public static int observationSize() { return 5; }
-
-    // Not very nice, but should be correct.
-//    private DataFeeder getRandomFeed(Random r) throws IOException {
-//        Random r1 = new Random(r.nextLong());
-//        int year = r.nextInt(23) + 1999;
-//        int month = r.nextInt(12) + 1;
-//        int day = r.nextInt(31) + 1;
-//
-//        String startDate = String.valueOf(year) + "-" + String.valueOf(month) + "-" + String.valueOf(day);
-//        String endDate = String.valueOf(year + r.nextInt(7) + 3) + "-" + String.valueOf(month) + "-" + String.valueOf(day);
-//        List<String> filesList = Utils.getTestFileNames();
-//        File file = new File(filesList.get(r.nextInt(filesList.size())));
-//
-//        return new DataFeeder(file, startDate, endDate);
-//    }
+    public static int observationSize() { return 4; }
 
     @Override
     public INDArray getData() {
-        return Nd4j.zeros(1,observationSize(),1);
-        //return Nd4j.create(new double[][][]{{{cash}, {stocksCount}, {avgPrice}, {currentPrice}, {currentGlobalMetric}}});
         // Observation size must be changed if the number of variables here changes.
-        //return Nd4j.createFromArray(new double[][][] {{{cash, stocksCount, avgPrice, currentPrice, currentGlobalMetric}}});
+        return Nd4j.create(new double[][][]{{{cash}, {getPortfolioValue()}, {avgBuyPrice}, {currentPrice}}});
     }
 
-    // todo: split/dividend
     public void step() {
         if (seriesEnd) {
-            throw new IllegalStateException("End of simulation");
+            throw new IllegalStateException("No more datapoints");
         }
-        Double[] res = feeder.getNext();
+        StockTimepoint[] res = feed.getNext();
         if (res == null) {
             seriesEnd = true;
+        }
+        else {
+            currentPrice = res[0].getOpen();
+            if (res[0].getSplit_coefficient() != 1.0 && stocksCount != 0) {
+                int oldCount = stocksCount;
+                stocksCount = (int) Math.round(stocksCount * res[0].getSplit_coefficient());
+                avgBuyPrice = avgBuyPrice * oldCount / stocksCount;
+            }
+            // todo: dividend holding period?
+            if (res[0].getDividend_amount() != 0.0 && stocksCount != 0) {
+                cash += stocksCount * res[0].getDividend_amount();
+            }
+        }
+        if (cash < 0 || stocksCount < 0 || netValue() > 5000 || avgBuyPrice < 0) {
+            String wtf = "dsf";
+        }
+    }
+
+    /**
+     * Place a buy order. Buys up to {@code count}, depending on {@code cash} available.
+     * Do not use with {@code count == 0}.
+     * @param count
+     * @throws IllegalArgumentException When called with {@code count == 0}.
+     */
+    public void buy(int count) {
+        if (count == 0) { throw new IllegalArgumentException("Attempt to buy 0 stocks, which is not nice"); }
+        int canBuy;
+        if (feed.pollPrice() == 0) {
+            return;
+        } else {
+            canBuy = (int) Math.floor(cash / (feed.pollPrice() * (1 + 0.01 * commissionPercent)));
+            if (canBuy == 0) { return; };
+        }
+        int numberToBuy = Math.min(count, canBuy);
+        double totalPrice = numberToBuy * feed.pollPrice();
+//        System.out.println(totalPrice + " " + cash + " " + getPortfolioValue());
+        cash -= totalPrice * (1 + 0.01 * commissionPercent);
+        if (cash < 0 || stocksCount < 0 || netValue() > 5000 || avgBuyPrice < 0) {
+            String wtf = "wtf";
+        }
+        avgBuyPrice = avgBuyPrice * stocksCount + totalPrice;
+        stocksCount += numberToBuy;
+        avgBuyPrice /= stocksCount;
+    }
+
+    /**
+     * Place a sell order. Sells up to {@code count}, depending on stocks number in portfolio.
+     * Do not use with {@code count == 0}.
+     * @param count
+     * @throws IllegalArgumentException When called with {@code count == 0}.
+     */
+    public void sell(int count) {
+        if (count == 0) { throw new IllegalArgumentException("Attempt to sell 0 stocks, which is not nice"); }
+        if (stocksCount == 0 || feed.pollPrice() == 0) {
             return;
         }
-    }
-
-    public void buy(int count) {
-        double total = feeder.pollPrice() * (1 + 0.01 * commissionPercent) * count;
-        if (cash >= total) {
-            cash -= total;
-            avgPrice = avgPrice * stocksCount + total;
-            stocksCount += count;
-            avgPrice /= stocksCount;
-        }
-    }
-
-    public void sell(int count) {
-        if (stocksCount >= count) {
-            double total = feeder.pollPrice() * (1 - 0.01 * commissionPercent) * count;
-            cash += total;
-            stocksCount -= count;
+        int numberToSell = Math.min(count, stocksCount);
+        double total = feed.pollPrice() * numberToSell;
+//        System.out.println("-" + total + " " + cash + " " + getPortfolioValue());
+        cash += total * (1 - 0.01 * commissionPercent);
+        stocksCount -= numberToSell;
+        if (stocksCount < 0 || cash < 0 || netValue() > 5000 || avgBuyPrice < 0) {
+            String wtf = "wtf";
         }
     }
 
     public double netValue() {
-        return cash + stocksCount * avgPrice;
+        return cash + getPortfolioValue();
     }
 
     public boolean isEnd() { return seriesEnd; }
 
-    public double stocksValue() { return avgPrice * stocksCount; }
+    public double getPortfolioValue() { return currentPrice * stocksCount; }
+
+    public String getFeedInfo() { return feed.getInfo(); }
 }

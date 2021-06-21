@@ -13,10 +13,12 @@
       <RowConstraints />
       <RowConstraints />
       <RowConstraints />
+      <RowConstraints />
    </rowConstraints>
    <children>
       <Button fx:id="getDataButton" mnemonicParsing="false" onAction="#getDataButtonClicked" text="Get data" />
       <Button mnemonicParsing="false" onAction="#browseSymbolsButtonClicked" text="Browse symbols" GridPane.rowIndex="1" />
       <Button mnemonicParsing="false" onAction="#statisticsButtonClicked" text="Statistics" GridPane.rowIndex="2" />
+      <Button mnemonicParsing="false" onAction="#trainButtonClicked" text="Start training" GridPane.rowIndex="3" />
    </children>
 </GridPane>
