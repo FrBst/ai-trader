@@ -38,4 +38,12 @@ public class TraderApplication {
         Thread fuck = new Thread(new TrainA3C());
         fuck.start();
     }
+
+    public void testButtonClicked() throws IOException {
+        Parent root = FXMLLoader.load(getClass().getResource("/NeuralNetworkTesting.fxml"));
+        Stage stage = new Stage();
+        stage.setTitle("Testing");
+        stage.setScene(new Scene(root));
+        stage.show();
+    }
 }

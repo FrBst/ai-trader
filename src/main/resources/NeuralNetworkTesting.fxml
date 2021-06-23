@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="666.0" prefWidth="695.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.NeuralNetworkTesting">
+   <children>
+      <VBox>
+         <children>
+             <TextField fx:id="numberTextField" promptText="Кол-во тестов" />
+             <Button mnemonicParsing="false" onAction="#onLaunchButtonClicked" text="Запуск" />
+            <ListView fx:id="resultsList" onMouseClicked="#onSymbolSelected" />
+            <TextArea fx:id="summary" editable="false" prefHeight="200.0" prefWidth="200.0" wrapText="true">
+               <font>
+                  <Font size="18.0" />
+               </font></TextArea>
+         </children>
+      </VBox>
+      <VBox>
+         <children>
+            <LineChart fx:id="priceChart" animated="false" createSymbols="false" title="Stock Price">
+              <xAxis>
+                <NumberAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis side="LEFT" />
+              </yAxis>
+            </LineChart>
+            <LineChart fx:id="portfolioChart" animated="false" createSymbols="false" title="Net Value">
+              <xAxis>
+                <NumberAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis side="LEFT" />
+              </yAxis>
+            </LineChart>
+            <LineChart fx:id="volumeChart" animated="false" createSymbols="false" title="Volume">
+              <xAxis>
+                <NumberAxis side="BOTTOM" />
+              </xAxis>
+              <yAxis>
+                <NumberAxis side="LEFT" />
+              </yAxis>
+            </LineChart>
+         </children>
+      </VBox>
+   </children>
+</HBox>

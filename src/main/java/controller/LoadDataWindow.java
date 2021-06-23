@@ -1,6 +1,7 @@
 package controller;
 
 import application.Configuration;
+import javafx.scene.chart.XYChart;
 import org.apache.commons.io.FileUtils;
 
 import java.io.BufferedReader;
@@ -140,15 +141,45 @@ public class LoadDataWindow {
     public void divideData() throws IOException {
         ArrayList<File> symbols = Arrays.stream(new File(dailyAdjustedDataFolder).listFiles()).collect(Collectors.toCollection(ArrayList<File>::new));
         Collections.shuffle(symbols);
-        Path copied;
+
+        double globalMax = 0.0;
+        Map<Double, Integer> names = new TreeMap<>();
         for (int i = 0; i < symbols.size(); i++) {
             if (i >= 500) {
-                copied = Paths.get("src/main/resources/dataset/train/" + symbols.get(i).getName());
+                double slopeMax = 0;
+                try (BufferedReader br = new BufferedReader(new FileReader(symbols.get(i)))) {
+                    double point;
+                    br.readLine();
+                    point = Double.parseDouble(br.readLine().split(",")[1]);
+
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        double newPoint = Double.parseDouble(line.split(",")[1]);
+                        double slope = Math.abs(newPoint - point) / point;
+                        point = newPoint;
+                        if (slope > slopeMax) {
+                            slopeMax = slope;
+                        }
+                    }
+
+                    names.put(slopeMax, i);
+                }
+                if (slopeMax > globalMax) {
+                    globalMax = slopeMax;
+                }
             } else {
-                copied = Paths.get("src/main/resources/dataset/test/" + symbols.get(i).getName());
+                Path copied = Paths.get("src/main/resources/dataset/test/" + symbols.get(i).getName());
+                Path originalPath = symbols.get(i).toPath();
+                Files.copy(originalPath, copied, StandardCopyOption.REPLACE_EXISTING);
             }
-            Path originalPath = symbols.get(i).toPath();
+        }
+
+        int i = 0;
+        for (var entry : names.entrySet()) {
+            Path copied = Paths.get(Configuration.getConfig("data-folder") + "train/" + (int) ((double)i / names.size() * 10.0) + "/" + symbols.get(entry.getValue()).getName());
+            Path originalPath = symbols.get(entry.getValue()).toPath();
             Files.copy(originalPath, copied, StandardCopyOption.REPLACE_EXISTING);
+            i++;
         }
     }
 }

@@ -20,5 +20,6 @@
       <Button mnemonicParsing="false" onAction="#browseSymbolsButtonClicked" text="Browse symbols" GridPane.rowIndex="1" />
       <Button mnemonicParsing="false" onAction="#statisticsButtonClicked" text="Statistics" GridPane.rowIndex="2" />
       <Button mnemonicParsing="false" onAction="#trainButtonClicked" text="Start training" GridPane.rowIndex="3" />
+      <Button mnemonicParsing="false" onAction="#testButtonClicked" text="Test the network!" GridPane.rowIndex="4" />
    </children>
 </GridPane>

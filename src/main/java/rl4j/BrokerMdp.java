@@ -9,22 +9,26 @@ import org.deeplearning4j.rl4j.space.ObservationSpace;
 import java.util.Random;
 
 public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
-    private final double inflationRate = 0.04;
+    private final double inflationRate = 0.05;
     // Assume that the stock falls in price after being delisted.
     private final double delistLoss = 0.1;
     // Used to make loss of money more grave.
-    private final double lossWeight = 1.1;
-    private final int startingCash;
+    private final double lossWeight = 1.0;
+    private final double startingCash;
     private final Random r;
     private int step = 0;
+    private double cumulativeReward = 0.0;
+    private double buysell = 0;
+    private int level;
 
     private SimpleBroker broker;
     private ArrayObservationSpace<SimpleBroker> observationSpace;
     private DiscreteSpace actionSpace = new DiscreteSpace(25);
 
-    public BrokerMdp(int startingCash, Random r) {
+    public BrokerMdp(double startingCash, Random r, int level) {
         this.startingCash = startingCash;
         this.r = r;
+        this.level = level;
 
         this.observationSpace = new ArrayObservationSpace<>(new int[]{SimpleBroker.observationSize()});
     }
@@ -41,7 +45,10 @@ public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
 
     @Override
     public SimpleBroker reset() {
-        broker = new SimpleBroker(startingCash, r);
+        broker = new SimpleBroker(startingCash, r, level);
+        step = 0;
+        cumulativeReward = 0.0;
+        buysell = 0;
         return broker;
     }
 
@@ -57,7 +64,7 @@ public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
         step++;
         double newNetPrice = broker.netValue();
 
-        double reward = -inflationRate * newNetPrice / 365 / startingCash ;
+        double reward = -inflationRate * broker.netValue() / 365 / startingCash ;
         double balance = newNetPrice - oldNetPrice;
         if (balance > 0) {
             reward += balance / startingCash;
@@ -65,24 +72,29 @@ public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
             reward += balance / startingCash * lossWeight;
         }
 
+        cumulativeReward += reward;
         // todo: separate events for delisted and end of period.
         if(broker.isEnd()){
             //reward -= (broker.getPortfolioValue() * (1 + delistLoss));
-            System.out.println((broker.netValue() / startingCash - 1) * 365 / step * 100 + "%/yr (" + broker.getFeedInfo() + ")");
+            System.out.println((buysell / step) + " " + String.format("%.2f", broker.netValue()) + " left, grow rate " +
+                    String.format("%+.2f", (broker.netValue() - startingCash) / startingCash * 365.0 / step * 100.0) +
+                    "%/yr (" + broker.getFeedInfo() + ")");
         }
 
-//        reward *= 100;
         return new StepReply<>(broker, reward, isDone(), null);
     }
 
-    public void doAction(int action){
+    public int doAction(int action){
+        int deficit = 0;
         int t = action - 12;
+        buysell += t;
         if (t > 0) {
-            broker.buy((int)Math.pow(2, t));
+            deficit = broker.buy((int)Math.pow(2, t));
         } else if (t < 0) {
-            broker.sell((int)Math.pow(2, -t));
+            deficit = broker.sell((int)Math.pow(2, -t));
         }
         broker.step();
+        return deficit;
     }
 
     @Override
@@ -92,6 +104,6 @@ public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
 
     @Override
     public MDP<SimpleBroker, Integer, DiscreteSpace> newInstance() {
-        return new BrokerMdp(startingCash, r);
+        return new BrokerMdp(startingCash, r, level);
     }
 }

@@ -10,11 +10,18 @@ public class DataFeed {
     private double randomIntradayPrice;
     private String info;
 
-    List<File> filesList = Utils.getTrainFiles();
-
-    public DataFeed(Random r) {
+    public DataFeed(Random r, int level) {
 
         ArrayList<StockTimepoint> fromFile;
+        // Random file from the training set or the test set.
+        // todo: really? KYS, but first fix this mess.
+        List<File> filesList;
+        if (level >= 0) {
+            filesList = Utils.getTrainFiles(level);
+        } else {
+            filesList = Utils.getTestFiles();
+        }
+
         do {
             // Starting date (within 1999-01-01 to 2019-12-12).
             int year = r.nextInt(21) + 1999;
@@ -27,9 +34,6 @@ public class DataFeed {
             day = r.nextInt(31) + 1;
             String endDate = (year + r.nextInt(8) + 3) + "-" + String.format("%02d", month) + "-" + String.format("%02d", day);
 
-
-            // Random file from the training set.
-            List<File> filesList = Utils.getTrainFiles();
             File file = filesList.get(r.nextInt(filesList.size()));
 
             fromFile = getData(file, startDate, endDate);
