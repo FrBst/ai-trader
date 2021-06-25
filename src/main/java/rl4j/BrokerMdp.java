@@ -9,7 +9,7 @@ import org.deeplearning4j.rl4j.space.ObservationSpace;
 import java.util.Random;
 
 public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
-    private final double inflationRate = 0.05;
+    private final double inflationRate = 0.06;
     // Assume that the stock falls in price after being delisted.
     private final double delistLoss = 0.1;
     // Used to make loss of money more grave.
@@ -64,7 +64,10 @@ public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
         step++;
         double newNetPrice = broker.netValue();
 
-        double reward = -inflationRate * broker.netValue() / 365 / startingCash ;
+        double reward = -inflationRate * broker.getCash() / 365 / startingCash ;
+        if (action == 12) {
+            reward += 0.07;
+        }
         double balance = newNetPrice - oldNetPrice;
         if (balance > 0) {
             reward += balance / startingCash;
@@ -81,7 +84,7 @@ public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
                     "%/yr (" + broker.getFeedInfo() + ")");
         }
 
-        return new StepReply<>(broker, reward, isDone(), null);
+        return new StepReply<>(broker, reward / 10, isDone(), null);
     }
 
     public int doAction(int action){

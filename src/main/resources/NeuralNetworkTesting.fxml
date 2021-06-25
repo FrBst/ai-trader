@@ -10,6 +10,7 @@
       <VBox>
          <children>
              <TextField fx:id="numberTextField" promptText="Кол-во тестов" />
+            <ChoiceBox fx:id="networkChoice"  prefWidth="150.0" />
              <Button mnemonicParsing="false" onAction="#onLaunchButtonClicked" text="Запуск" />
             <ListView fx:id="resultsList" onMouseClicked="#onSymbolSelected" />
             <TextArea fx:id="summary" editable="false" prefHeight="200.0" prefWidth="200.0" wrapText="true">

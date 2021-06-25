@@ -1,5 +1,6 @@
 package rl4j;
 
+import application.Configuration;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.weights.WeightInit;
@@ -28,52 +29,87 @@ public class TrainA3C implements Runnable {
 
         ScoreIterationListener[] listeners = new ScoreIterationListener[] {new ScoreIterationListener(50)};
 
-        A3CDiscrete.A3CConfiguration A3C =
-                A3CDiscrete.A3CConfiguration.builder()
-                        .seed(5)
-                        .maxEpochStep(365 * 11)
-                        .maxStep(50000)
-                        .numThread(16)
-                        .nstep(10)
-                        .updateStart(0)
-                        .rewardFactor(0.1)
-                        .gamma(0.995)
-                        .errorClamp(1.0)
-                        .build();
+        A3CDiscrete.A3CConfiguration A3C;
+        ActorCriticFactorySeparateStdDense.Configuration configuration;
+        MDP<SimpleBroker, Integer, DiscreteSpace> mdp;
+        A3CDiscreteDense<SimpleBroker> a3c;
 
-        ActorCriticFactorySeparateStdDense.Configuration configuration = ActorCriticFactorySeparateStdDense.Configuration.builder()
+        A3C = A3CDiscrete.A3CConfiguration.builder()
+                .seed(1)
+                .maxEpochStep(365 * 11)
+                .maxStep(100000)
+                .numThread(16)
+                .nstep(10)
+                .updateStart(0)
+                .rewardFactor(0.1)
+                .gamma(0.995)
+                .errorClamp(1.0)
+                .build();
+        configuration = ActorCriticFactorySeparateStdDense.Configuration.builder()
                 .updater(new Adam(0.01))
                 .useLSTM(true)
                 .l2(0.001)
                 .numHiddenNodes(32)
                 .numLayer(32)
                 .build();
+        mdp = new BrokerMdp(1000, new Random(66), 1);
 
-        MDP<SimpleBroker, Integer, DiscreteSpace> mdp = new BrokerMdp(1000, new Random(121), 0);
+                    try {
+                a3c = new A3CDiscreteDense<SimpleBroker>(mdp,
+                        new ActorCriticSeparate(ModelSerializer.restoreMultiLayerNetwork(Configuration.getConfig("network-folder") + "value-unknown-lv5.bin"),
+                                ModelSerializer.restoreMultiLayerNetwork(Configuration.getConfig("network-folder") + "policy-unknown-lv5.bin"))
+                        , A3C);
 
-        A3CDiscreteDense<SimpleBroker> a3c = new A3CDiscreteDense<>(mdp, configuration, A3C);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
 
-//        try {
-//            a3c = new A3CDiscreteDense<SimpleBroker>(mdp,
-//                    new ActorCriticSeparate(ModelSerializer.restoreMultiLayerNetwork("value-balanced-v1.bin"),
-//                            ModelSerializer.restoreMultiLayerNetwork("policy-balanced-v1.bin"))
-//                    , A3C);
-//
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+        //a3c = new A3CDiscreteDense<>(mdp, configuration, A3C);
 
-        //start the training
         a3c.train();
-        System.out.println("End of training");
 
-        //useless on toy but good practice!
         mdp.close();
         try {
-            a3c.getPolicy().save("value-balanced-v1.bin", "policy-balanced-v1.bin");
+            a3c.getPolicy().save(Configuration.getConfig("network-folder") + "value-unknown-lv5.bin",
+                    Configuration.getConfig("network-folder") + "policy-unknown-lv5.bin");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+//        for (int i = 4; i < 10; i++) {
+//            A3C = A3CDiscrete.A3CConfiguration.builder()
+//                            .seed(5)
+//                            .maxEpochStep(365 * 11)
+//                            .maxStep(50000)
+//                            .numThread(16)
+//                            .nstep(10)
+//                            .updateStart(0)
+//                            .rewardFactor(0.1)
+//                            .gamma(0.995)
+//                            .errorClamp(1.0)
+//                            .build();
+//            mdp = new BrokerMdp(1000, new Random(121), i);
+//
+//            try {
+//                a3c = new A3CDiscreteDense<SimpleBroker>(mdp,
+//                        new ActorCriticSeparate(ModelSerializer.restoreMultiLayerNetwork(Configuration.getConfig("network-folder") + "value-test-lv" + (i-1) + ".bin"),
+//                                ModelSerializer.restoreMultiLayerNetwork(Configuration.getConfig("network-folder") + "policy-test-lv" + (i-1) + ".bin"))
+//                        , A3C);
+//
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//
+//            a3c.train();
+//
+//            mdp.close();
+//            try {
+//                a3c.getPolicy().save(Configuration.getConfig("network-folder") + "value-test-lv" + i + ".bin",
+//                        Configuration.getConfig("network-folder") + "policy-test-lv" + i + ".bin");
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
     }
 
     public void run() {

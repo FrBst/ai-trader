@@ -2,25 +2,37 @@ package controller;
 
 import application.Configuration;
 import com.clearspring.analytics.stream.ITopK;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.util.Callback;
+import org.deeplearning4j.rl4j.network.ac.ActorCriticSeparate;
+import org.deeplearning4j.rl4j.policy.ACPolicy;
+import org.deeplearning4j.util.ModelSerializer;
+import rl4j.SimpleBroker;
 import service.NetworkTest;
 
 import javafx.scene.control.*;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 
 public class NeuralNetworkTesting {
 
     private ObservableList<String> results;
+    private ObservableList<String> networks;
+
+    private ACPolicy<SimpleBroker> selectedPolicy;
 
     @FXML
     private TextField numberTextField;
@@ -38,8 +50,23 @@ public class NeuralNetworkTesting {
     @FXML
     private TextArea summary;
 
+    @FXML
+    private ChoiceBox<String> networkChoice;
+
     public void initialize() {
         results = FXCollections.observableArrayList(Arrays.stream(new File(Configuration.getConfig("temp-folder")).list()).toList());
+
+        networks = FXCollections.observableArrayList(
+                Arrays.stream(new File(Configuration.getConfig("network-folder")).list())
+                        .map(s -> s.substring(s.indexOf('-')+1))
+                        .distinct()
+                        .toList());
+        networkChoice.setItems(networks);
+        networkChoice.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> selectNetwork(newValue));
+        networkChoice.getSelectionModel().selectFirst();
+
         resultsList.setItems(results);
         resultsList.setCellFactory(new Callback<ListView<String>, ListCell<String>>()
         {
@@ -63,19 +90,26 @@ public class NeuralNetworkTesting {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        networkChoice.setItems(networks);
     }
 
     // todo: threading????
     // todo: code style? Please? Somebody?
     public void onLaunchButtonClicked() {
         clearTemp();
-        int threadNumber = Integer.parseInt(numberTextField.getText());
+        int threadNumber;
+        if (numberTextField.getText() == "") {
+            threadNumber = 1;
+        } else {
+            threadNumber = Integer.parseInt(numberTextField.getText());
+        }
         if (threadNumber < 1) { threadNumber = 1; }
         List<Thread> testers = new LinkedList<>();
         for (int i = 0; i < threadNumber; i++) {
             //testers.add(new Thread(new NetworkTest(1000)));
             //testers.get(testers.size()-1).start();
-            new NetworkTest(1000, i).run();
+            new NetworkTest(selectedPolicy, 1000, i).run();
         }
         resultsList.refresh();
         results.setAll(Arrays.stream(new File(Configuration.getConfig("temp-folder")).list()).toList());
@@ -112,7 +146,7 @@ public class NeuralNetworkTesting {
                     tokens = line.split(",");
                     len++;
                 } while ((line = br.readLine()) != null);
-                yearlyGrowth += (Double.parseDouble(tokens[0]) - 1000.0) / (double) len * 365.0 / 100.0;
+                yearlyGrowth += (Double.parseDouble(tokens[0]) - 1000.0) / (double) len * 36.5;
             }
         }
         yearlyGrowth /= results.size();
@@ -150,5 +184,16 @@ public class NeuralNetworkTesting {
         priceChart.getData().setAll(price);
         portfolioChart.getData().setAll(portfolio);
         volumeChart.getData().setAll(volume);
+    }
+
+    @FXML
+    private void selectNetwork(String name) {
+        try {
+            selectedPolicy = new ACPolicy<SimpleBroker>(
+                    new ActorCriticSeparate(ModelSerializer.restoreMultiLayerNetwork(Configuration.getConfig("network-folder") + "value-" + name),
+                    ModelSerializer.restoreMultiLayerNetwork(Configuration.getConfig("network-folder") + "policy-" + name)));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

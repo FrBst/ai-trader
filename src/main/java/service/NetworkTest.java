@@ -20,16 +20,9 @@ public class NetworkTest implements Runnable {
     private ACPolicy<SimpleBroker> policy;
     private final FileWriter writer;
 
-    public NetworkTest(double startingCash, int id) {
+    public NetworkTest(ACPolicy<SimpleBroker> policy, double startingCash, int id) {
         broker = new SimpleBroker(startingCash, new Random(), -1);
-        try {
-            if (policy == null) {
-                policy = new ACPolicy<SimpleBroker>(new ActorCriticSeparate(ModelSerializer.restoreMultiLayerNetwork("value-balanced-v1.bin"),
-                        ModelSerializer.restoreMultiLayerNetwork("policy-balanced-v1.bin")));
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        this.policy = policy;
 
         File myObj = new File(Configuration.getConfig("temp-folder") + id + ".csv");
         try {

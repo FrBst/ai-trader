@@ -32,12 +32,31 @@
             <artifactId>deeplearning4j-core</artifactId>
             <version>${nd4j.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.nd4j/nd4j-native-platform -->
-        <dependency>
-            <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-native-platform</artifactId>
-            <version>${nd4j.version}</version>
-        </dependency>
+                <dependency>
+                    <groupId>org.nd4j</groupId>
+                    <artifactId>nd4j-native-platform</artifactId>
+                    <version>${nd4j.version}</version>
+                </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.nd4j</groupId>-->
+<!--            <artifactId>nd4j-cuda-10.2-platform</artifactId>-->
+<!--            <version>${nd4j.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.deeplearning4j</groupId>-->
+<!--            <artifactId>deeplearning4j-cuda-10.2</artifactId>-->
+<!--            <version>${nd4j.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.nd4j</groupId>-->
+<!--            <artifactId>nd4j-cuda-10.2</artifactId>-->
+<!--            <version>${nd4j.version}</version>-->
+<!--        </dependency>-->
+<!--        <dependency>-->
+<!--            <groupId>org.bytedeco</groupId>-->
+<!--            <artifactId>cuda-platform-redist</artifactId>-->
+<!--            <version>10.2-7.6-1.5.3</version>-->
+<!--        </dependency>-->
         <!-- https://mvnrepository.com/artifact/org.datavec/datavec-api -->
         <dependency>
             <groupId>org.datavec</groupId>
