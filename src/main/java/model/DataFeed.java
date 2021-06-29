@@ -38,7 +38,7 @@ public class DataFeed {
 
             fromFile = getData(file, startDate, endDate);
             info = file.getName() + " (" + startDate + "-" + endDate + ")";
-        } while (fromFile == null || fromFile.size() < 100);
+        } while (fromFile == null || fromFile.size() < 200);
         data = fromFile;
     }
 
@@ -109,4 +109,6 @@ public class DataFeed {
     }
 
     public String getInfo() { return info; }
+
+    public int size() { return data.size(); }
 }

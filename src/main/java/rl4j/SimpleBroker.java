@@ -73,7 +73,7 @@ public class SimpleBroker implements Encodable {
     @Override
     public INDArray getData() {
         // Observation size must be changed if the number of variables here changes.
-        return Nd4j.create(new double[][][]{{{cash / 4000 - 0.5}, {getPortfolioValue() / 4000 - 0.5}, {avgBuyPrice / 100 - 0.5}, {currentPrice / 100 - 0.5}}});
+        return Nd4j.create(new double[][][]{{{cash / 4000}, {getPortfolioValue() / 4000}, {avgBuyPrice / 100}, {currentPrice / 100}}});
     }
 
     public void step() {
@@ -168,4 +168,6 @@ public class SimpleBroker implements Encodable {
     public int getStocksCount() { return stocksCount; }
 
     public double getCurrentPrice() { return currentPrice; }
+
+    public int getDataLength() { return feed.size(); }
 }

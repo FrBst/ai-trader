@@ -9,7 +9,7 @@ import org.deeplearning4j.rl4j.space.ObservationSpace;
 import java.util.Random;
 
 public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
-    private final double inflationRate = 0.06;
+    private final double inflationRate = 0.1;
     // Assume that the stock falls in price after being delisted.
     private final double delistLoss = 0.1;
     // Used to make loss of money more grave.
@@ -20,6 +20,8 @@ public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
     private double cumulativeReward = 0.0;
     private double buysell = 0;
     private int level;
+    private int dataSize = 0;
+    int zeroes = 0;
 
     private SimpleBroker broker;
     private ArrayObservationSpace<SimpleBroker> observationSpace;
@@ -49,6 +51,8 @@ public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
         step = 0;
         cumulativeReward = 0.0;
         buysell = 0;
+        this.dataSize = broker.getDataLength();
+        zeroes = 0;
         return broker;
     }
 
@@ -66,25 +70,28 @@ public class BrokerMdp implements MDP<SimpleBroker, Integer, DiscreteSpace> {
 
         double reward = -inflationRate * broker.getCash() / 365 / startingCash ;
         if (action == 12) {
-            reward += 0.07;
-        }
-        double balance = newNetPrice - oldNetPrice;
-        if (balance > 0) {
-            reward += balance / startingCash;
+            reward += 100;
+            zeroes++;
         } else {
-            reward += balance / startingCash * lossWeight;
+            reward -= Math.pow(Math.abs(action - 12) + 2, 2);
         }
+//        double balance = newNetPrice - oldNetPrice;
+//        if (balance > 0) {
+//            reward += balance / startingCash;
+//        } else {
+//            reward += balance / startingCash * lossWeight;
+//        }
 
         cumulativeReward += reward;
         // todo: separate events for delisted and end of period.
         if(broker.isEnd()){
             //reward -= (broker.getPortfolioValue() * (1 + delistLoss));
-            System.out.println((buysell / step) + " " + String.format("%.2f", broker.netValue()) + " left, grow rate " +
+            System.out.println(zeroes + " " + (buysell / step) + " " + String.format("%.2f", broker.netValue()) + " left, grow rate " +
                     String.format("%+.2f", (broker.netValue() - startingCash) / startingCash * 365.0 / step * 100.0) +
                     "%/yr (" + broker.getFeedInfo() + ")");
         }
 
-        return new StepReply<>(broker, reward / 10, isDone(), null);
+        return new StepReply<>(broker, reward / 100 / dataSize, isDone(), null);
     }
 
     public int doAction(int action){
